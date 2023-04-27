@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <opencv2/opencv.hpp>
 
-int main(i) {
+int main() {
   cv::Mat image;
   image = cv::imread("barbara.pgm");
   if (image.empty()) {
