@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
     printf("Image file is not found.\n");
     return EXIT_FAILURE;
   }
+  printf("width = %d, height = %d", image.cols, image.rows);
   cv::imshow("image", image);
   cv::waitKey();
   cv::destroyAllWindows();
