@@ -8,17 +8,23 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
   cv::Mat image;
-  image = cv::imread(argv[1], cv::ImreadModes::IMREAD_GRAYSCALE);
+  image = cv::imread(argv[1], cv::ImreadModes::IMREAD_COLOR);
   if (image.empty()) {
     printf("Image file is not found.\n");
     return EXIT_FAILURE;
   }
-  printf("width = %d, height = %d", image.cols, image.rows);
-  for (int y = 0; y < image.rows; ++y) {
-    for (int x = 0; x < image.cols; ++x) {
-      int val = image.data[y * image.cols + x];
-      val /= 2;
-      image.data[y * image.cols + x] = val;
+  const int WIDTH = image.cols;
+  const int HEIGHT = image.rows;
+  const int NC = image.channels();
+  printf("width = %d, height = %d", WIDTH, HEIGHT);
+  for (int y = 0; y < HEIGHT; ++y) {
+    const int STRIDE = WIDTH * NC;
+    for (int x = 0; x < WIDTH; ++x) {
+      for (int c = 0; c < NC; ++c) {
+        int val = image.data[y * STRIDE + x * NC + c];
+        val = (c != 0) ? 0 : val;
+        image.data[y * STRIDE + x * NC + c] = val;
+      }
     }
   }
   cv::imshow("image", image);
