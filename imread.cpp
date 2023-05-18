@@ -20,10 +20,18 @@ int main(int argc, char *argv[]) {
   for (int y = 0; y < HEIGHT; ++y) {
     const int STRIDE = WIDTH * NC;
     for (int x = 0; x < WIDTH; ++x) {
+      double out[3] = {0.0, 0.0, 0.0};
+      double wY[3] = {0.114, 0.587, 0.299};
+      double wCb[3] = {0.5, -.3313, -.1687};
+      double wCr[3] = {-.0813, -.4187, 0.5};
       for (int c = 0; c < NC; ++c) {
-        int val = image.data[y * STRIDE + x * NC + c];
-        val = (c != 0) ? 0 : val;
-        image.data[y * STRIDE + x * NC + c] = val;
+        out[0] += image.data[y * STRIDE + x * NC + c] * wY[c];
+        out[1] += image.data[y * STRIDE + x * NC + c] * wCb[c];
+        out[2] += image.data[y * STRIDE + x * NC + c] * wCr[c];
+      }
+      for (int c = 0; c < NC; ++c) {
+        int val = (c != 0) ? 128 : 0;
+        image.data[y * STRIDE + x * NC + c] = out[c] + val;
       }
     }
   }
