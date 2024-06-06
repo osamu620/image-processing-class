@@ -1,7 +1,21 @@
+#include <climits>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 #include "mytools.hpp"
+#include "qtable.hpp"
+
+void process_component(cv::Mat &image, float *qmatrix) {
+  cv::Mat fimage;
+  image.convertTo(fimage, CV_32F);
+  fimage -= 128.0;
+  blkproc(fimage, fdct2);
+  blkproc(fimage, quantization, qmatrix);
+  blkproc(fimage, dequantization, qmatrix);
+  blkproc(fimage, idct2);
+  fimage += 128.0;
+  fimage.convertTo(image, image.type());
+}
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -15,10 +29,41 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  int quality = 1;
+  float QF;
+  if (quality <= 50) {
+    QF = floorf(5000.0f / quality);
+  } else {
+    QF = 200.0f - 2.0f * quality;
+  }
+  float scale = QF / 100.0f;
+  float qmatrix[3][64];
+  for (int c = 0; c < 3; ++c) {
+    for (int i = 0; i < 64; ++i) {
+      float stepsize = round(qtable[c][i] * scale);
+      if (stepsize < 1) {
+        stepsize = 1;
+      } else if (stepsize > 255) {
+        stepsize = 255;
+      }
+      qmatrix[c][i] = stepsize;
+    }
+  }
   iminfo(image);
 
-  blkproc(image, testfunc);
-
+  if (image.channels() == 3) {
+    cv::cvtColor(image, image, cv::COLOR_BGR2YCrCb);
+  }
+  std::vector<cv::Mat> cimage(image.channels());
+  // カラー画像の場合、cimage[0] = R, cimage[1] = G...
+  cv::split(image, cimage);
+  for (int c = 0; c < image.channels(); ++c) {
+    process_component(cimage[c], qmatrix[c]);
+  }
+  cv::merge(cimage, image);
+  if (image.channels() == 3) {
+    cv::cvtColor(image, image, cv::COLOR_YCrCb2BGR);
+  }
   cv::imshow("Output", image);
   int keycode = 0;
   while (keycode != 'q') {
