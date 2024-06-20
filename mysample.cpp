@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  int quality = 1;
+  int quality = 5;
   float QF;
   if (quality <= 50) {
     QF = floorf(5000.0f / quality);
@@ -40,13 +40,7 @@ int main(int argc, char *argv[]) {
   float qmatrix[3][64];
   for (int c = 0; c < 3; ++c) {
     for (int i = 0; i < 64; ++i) {
-      float stepsize = round(qtable[c][i] * scale);
-      if (stepsize < 1) {
-        stepsize = 1;
-      } else if (stepsize > 255) {
-        stepsize = 255;
-      }
-      qmatrix[c][i] = stepsize;
+      qmatrix[c][i] = clip(round(qtable[c][i] * scale));
     }
   }
   iminfo(image);

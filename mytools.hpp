@@ -25,19 +25,22 @@ void quantization(cv::Mat &in, float *qtable) {
     exit(EXIT_FAILURE);
   }
   float *p = (float *)in.data;
-  for (int y = 0; y < in.rows; y += BSIZE) {
-    for (int x = 0; x < in.cols; x += BSIZE) {
+  for (int y = 0; y < in.rows; ++y) {
+    for (int x = 0; x < in.cols; ++x) {
       float val = p[y * in.rows + x];
-      val /= qtable[y * in.rows + x];
-      p[y * in.rows + x] = floorf(val);
+      float a = fabs(val);
+      a /= qtable[y * in.rows + x];
+      a = floorf(a);
+      a *= (val < 0.0) ? -1 : 1;
+      p[y * in.rows + x] = a;
     }
   }
 }
 
 void dequantization(cv::Mat &in, float *qtable) {
   float *p = (float *)in.data;
-  for (int y = 0; y < in.rows; y += BSIZE) {
-    for (int x = 0; x < in.cols; x += BSIZE) {
+  for (int y = 0; y < in.rows; ++y) {
+    for (int x = 0; x < in.cols; ++x) {
       float val = p[y * in.rows + x];
       float a = fabs(val);
       if (a > 0.0) {
