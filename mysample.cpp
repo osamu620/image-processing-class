@@ -2,19 +2,26 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
+#include "entropy-coding.hpp"
 #include "mytools.hpp"
 #include "qtable.hpp"
 
-void process_component(cv::Mat &image, float *qmatrix) {
+void process_component_enc(cv::Mat &image, float *qmatrix) {
   cv::Mat fimage;
   image.convertTo(fimage, CV_32F);
   fimage -= 128.0;
   blkproc(fimage, fdct2);
   blkproc(fimage, quantization, qmatrix);
+  fimage.convertTo(image, CV_16S);
+}
+
+void process_component_dec(cv::Mat &image, float *qmatrix) {
+  cv::Mat fimage;
+  image.convertTo(fimage, CV_32F);
   blkproc(fimage, dequantization, qmatrix);
   blkproc(fimage, idct2);
   fimage += 128.0;
-  fimage.convertTo(image, image.type());
+  fimage.convertTo(image, CV_8U);
 }
 
 int main(int argc, char *argv[]) {
@@ -63,7 +70,13 @@ int main(int argc, char *argv[]) {
     cv::resize(cimage[1], cimage[1], cv::Size(), 0.5, 0.5, cv::INTER_AREA);
   }
   for (int c = 0; c < image.channels(); ++c) {
-    process_component(cimage[c], qmatrix[c]);
+    process_component_enc(cimage[c], qmatrix[c]);
+  }
+  // entropy coding
+  std::vector<uint8_t> bytes = Encode_MCU(cimage);
+
+  for (int c = 0; c < image.channels(); ++c) {
+    process_component_dec(cimage[c], qmatrix[c]);
   }
   // クロマアップサンプリング
   if (image.channels() == 3) {
